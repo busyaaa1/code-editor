@@ -1,6 +1,7 @@
-import { Code2, Sparkles } from 'lucide-react';
+import { Code2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CodeEditor from '@/components/CodeEditor';
+import EditorTabs from '@/components/EditorTabs';
 import LivePreview from '@/components/LivePreview';
 import SakuraBackground from '@/components/SakuraBackground';
 import { Button } from '@/components/ui/button';
@@ -59,7 +60,7 @@ button:hover {
 
 export default function EditorPage() {
   const [code, setCode] = useState<EditorState>(defaultCode);
-  const [sakuraEnabled, setSakuraEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<'html' | 'css' | 'javascript'>('html');
 
   // Load code from localStorage on mount
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function EditorPage() {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(code));
-    }, 500); // Debounce saves
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [code]);
@@ -96,22 +97,22 @@ export default function EditorPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Sakura Background */}
-      <SakuraBackground enabled={sakuraEnabled} petalCount={30} />
+      {/* Sakura Background - Always enabled */}
+      <SakuraBackground enabled={true} petalCount={30} />
 
       {/* Main Content */}
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
         <header className="glass border-b border-border/50 sticky top-0 z-20">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-3 xl:px-4 py-3 xl:py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center glow-primary">
-                  <Code2 className="w-6 h-6 text-primary-foreground" />
+              <div className="flex items-center gap-2 xl:gap-3">
+                <div className="w-8 h-8 xl:w-10 xl:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center glow-primary">
+                  <Code2 className="w-5 h-5 xl:w-6 xl:h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold gradient-text">Busya</h1>
-                  <p className="text-xs text-muted-foreground">Code Editor</p>
+                  <h1 className="text-xl xl:text-2xl font-bold gradient-text">Busya</h1>
+                  <p className="text-xs text-muted-foreground hidden xl:block">Code Editor</p>
                 </div>
               </div>
 
@@ -119,17 +120,8 @@ export default function EditorPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSakuraEnabled(!sakuraEnabled)}
-                  className="glass border-border/50"
-                >
-                  <Sparkles className={`w-4 h-4 mr-2 ${sakuraEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
-                  {sakuraEnabled ? 'Sakura On' : 'Sakura Off'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
                   onClick={handleReset}
-                  className="glass border-border/50"
+                  className="glass border-border/50 text-xs xl:text-sm"
                 >
                   Reset Code
                 </Button>
@@ -139,38 +131,46 @@ export default function EditorPage() {
         </header>
 
         {/* Editor Layout */}
-        <main className="flex-1 container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-[calc(100vh-140px)]">
-            {/* Left Side - Code Editors */}
-            <div className="flex flex-col gap-4 h-full">
-              <div className="flex-1 min-h-0">
-                <CodeEditor
-                  language="html"
-                  value={code.html}
-                  onChange={handleCodeChange('html')}
-                  label="HTML"
-                />
-              </div>
-              <div className="flex-1 min-h-0">
-                <CodeEditor
-                  language="css"
-                  value={code.css}
-                  onChange={handleCodeChange('css')}
-                  label="CSS"
-                />
-              </div>
-              <div className="flex-1 min-h-0">
-                <CodeEditor
-                  language="javascript"
-                  value={code.javascript}
-                  onChange={handleCodeChange('javascript')}
-                  label="JavaScript"
-                />
+        <main className="flex-1 container mx-auto px-2 xl:px-4 py-3 xl:py-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 xl:gap-6 h-[calc(100vh-100px)] xl:h-[calc(100vh-140px)]">
+            {/* Left Side - Tabbed Code Editor */}
+            <div className="flex flex-col h-full min-h-0">
+              <div className="glass-strong rounded-2xl overflow-hidden h-full flex flex-col">
+                {/* Tabs */}
+                <EditorTabs activeTab={activeTab} onTabChange={setActiveTab} />
+                
+                {/* Single Editor Container */}
+                <div className="flex-1 monaco-editor-container">
+                  {activeTab === 'html' && (
+                    <CodeEditor
+                      language="html"
+                      value={code.html}
+                      onChange={handleCodeChange('html')}
+                      label="HTML"
+                    />
+                  )}
+                  {activeTab === 'css' && (
+                    <CodeEditor
+                      language="css"
+                      value={code.css}
+                      onChange={handleCodeChange('css')}
+                      label="CSS"
+                    />
+                  )}
+                  {activeTab === 'javascript' && (
+                    <CodeEditor
+                      language="javascript"
+                      value={code.javascript}
+                      onChange={handleCodeChange('javascript')}
+                      label="JavaScript"
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Right Side - Live Preview */}
-            <div className="h-full">
+            <div className="h-full min-h-[400px] xl:min-h-0">
               <LivePreview
                 html={code.html}
                 css={code.css}

@@ -211,3 +211,49 @@ Busya Code Editor - Sakura Theme (Dark Mode Only)
   z-index: 1;
   filter: blur(0.5px);
 }
+
+/* Mobile optimizations */
+@media (max-width: 1279px) {
+  /* Reduce sakura petal size and opacity on mobile */
+  .sakura-petal {
+    width: 8px;
+    height: 8px;
+    opacity: 0.4;
+    filter: blur(0.3px);
+  }
+  
+  /* Reduce glassmorphism blur on mobile for performance */
+  .glass {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  
+  .glass-strong {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  /* Reduce glow effects on mobile */
+  .glow-primary {
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.2), 0 0 20px hsl(var(--primary) / 0.05);
+  }
+  
+  .glow-primary-strong {
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.1);
+  }
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:bg-accent\/30:hover {
+    background-color: transparent;
+  }
+  
+  .hover\:text-white:hover {
+    color: inherit;
+  }
+  
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+}

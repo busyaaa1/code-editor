@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SakuraBackgroundProps {
   enabled: boolean;
@@ -7,6 +7,19 @@ interface SakuraBackgroundProps {
 
 export default function SakuraBackground({ enabled, petalCount = 30 }: SakuraBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [actualPetalCount, setActualPetalCount] = useState(petalCount);
+
+  // Adjust petal count based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1280;
+      setActualPetalCount(isMobile ? Math.floor(petalCount / 2) : petalCount);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [petalCount]);
 
   useEffect(() => {
     if (!enabled || !containerRef.current) return;
@@ -15,7 +28,7 @@ export default function SakuraBackground({ enabled, petalCount = 30 }: SakuraBac
     const petals: HTMLDivElement[] = [];
 
     // Create petals
-    for (let i = 0; i < petalCount; i++) {
+    for (let i = 0; i < actualPetalCount; i++) {
       const petal = document.createElement('div');
       petal.className = 'sakura-petal';
       
@@ -56,7 +69,7 @@ export default function SakuraBackground({ enabled, petalCount = 30 }: SakuraBac
     return () => {
       petals.forEach(petal => petal.remove());
     };
-  }, [enabled, petalCount]);
+  }, [enabled, actualPetalCount]);
 
   if (!enabled) return null;
 

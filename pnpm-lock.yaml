@@ -126,7 +126,7 @@ importers:
         specifier: ^0.553.0
         version: 0.553.0(react@18.3.1)
       miaoda-auth-react:
-        specifier: ^2.0.6
+        specifier: 2.0.6
         version: 2.0.6(@supabase/supabase-js@2.76.1)(react-dom@18.3.1(react@18.3.1))(react-router-dom@7.9.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       miaoda-sc-plugin:
         specifier: 1.0.49

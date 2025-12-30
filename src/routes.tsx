@@ -1,5 +1,5 @@
-import SamplePage from './pages/SamplePage';
 import type { ReactNode } from 'react';
+import EditorPage from './pages/EditorPage';
 
 interface RouteConfig {
   name: string;
@@ -10,9 +10,9 @@ interface RouteConfig {
 
 const routes: RouteConfig[] = [
   {
-    name: 'Sample Page',
+    name: 'Busya Code Editor',
     path: '/',
-    element: <SamplePage />
+    element: <EditorPage />
   }
 ];
 

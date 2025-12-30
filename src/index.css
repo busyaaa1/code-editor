@@ -5,78 +5,106 @@
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
+Busya Code Editor - Sakura Theme (Dark Mode Only)
 */
 
 @layer base {
   :root {
-    --radius: 0.5rem;
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --sidebar-background: 300 0% 98%;
-    --sidebar-foreground: 300 0% 4%;
-    --sidebar-primary: 330 0% 9%;
-    --sidebar-primary-foreground: 300 0% 98%;
-    --sidebar-accent: 300 0% 96%;
-    --sidebar-accent-foreground: 330 0% 9%;
-    --sidebar-border: 330 0% 90%;
-    --sidebar-ring: 0 0% 63%;
-    --destructive-foreground: 210 40% 98%;
+    --radius: 1rem;
+    
+    /* Sakura-themed dark mode color palette */
+    --background: 280 30% 8%;
+    --foreground: 330 100% 98%;
+    
+    --card: 280 25% 12%;
+    --card-foreground: 330 100% 98%;
+    
+    --popover: 280 30% 10%;
+    --popover-foreground: 330 100% 98%;
+    
+    /* Primary: Sakura Pink */
+    --primary: 340 82% 65%;
+    --primary-foreground: 280 30% 8%;
+    --primary-glow: 350 100% 75%;
+    
+    /* Secondary: Rose */
+    --secondary: 320 60% 55%;
+    --secondary-foreground: 330 100% 98%;
+    
+    /* Muted: Soft purple-gray */
+    --muted: 280 20% 20%;
+    --muted-foreground: 300 30% 70%;
+    
+    /* Accent: Light pink with low saturation */
+    --accent: 340 40% 15%;
+    --accent-foreground: 340 100% 90%;
+    
+    /* Friendly error color: Soft pink instead of harsh red */
+    --error: 350 70% 65%;
+    --error-foreground: 330 100% 98%;
+    
+    /* Success: Soft mint */
+    --success: 160 50% 60%;
+    --success-foreground: 280 30% 8%;
+    
+    /* Warning: Soft peach */
+    --warning: 30 80% 65%;
+    --warning-foreground: 280 30% 8%;
+    
+    --destructive: 350 70% 65%;
+    --destructive-foreground: 330 100% 98%;
+    
+    --border: 280 30% 20%;
+    --input: 280 25% 15%;
+    --ring: 340 82% 65%;
+    
+    /* Glass effect variables */
+    --glass-bg: 280 25% 12% / 0.7;
+    --glass-border: 340 60% 60% / 0.2;
+    
+    /* Chart colors with sakura theme */
+    --chart-1: 340 82% 65%;
+    --chart-2: 320 60% 55%;
+    --chart-3: 280 50% 60%;
+    --chart-4: 350 100% 75%;
+    --chart-5: 300 70% 65%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%; 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 330 0% 9%;
-    --sidebar-foreground: 300 0% 98%;
-    --sidebar-primary: 225 84% 49%;
-    --sidebar-primary-foreground: 300 0% 98%;
-    --sidebar-accent: 320 0% 15%;
-    --sidebar-accent-foreground: 300 0% 98%;
-    --sidebar-border: 300 50% 0% / 10%;
-    --sidebar-ring: 300 0% 45%;
-    --destructive-foreground: 210 40% 98%;
+    /* Dark mode is the default and only mode for Busya */
+    --background: 280 30% 8%;
+    --foreground: 330 100% 98%;
+    --card: 280 25% 12%;
+    --card-foreground: 330 100% 98%;
+    --popover: 280 30% 10%;
+    --popover-foreground: 330 100% 98%;
+    --primary: 340 82% 65%;
+    --primary-foreground: 280 30% 8%;
+    --primary-glow: 350 100% 75%;
+    --secondary: 320 60% 55%;
+    --secondary-foreground: 330 100% 98%;
+    --muted: 280 20% 20%;
+    --muted-foreground: 300 30% 70%;
+    --accent: 340 40% 15%;
+    --accent-foreground: 340 100% 90%;
+    --error: 350 70% 65%;
+    --error-foreground: 330 100% 98%;
+    --success: 160 50% 60%;
+    --success-foreground: 280 30% 8%;
+    --warning: 30 80% 65%;
+    --warning-foreground: 280 30% 8%;
+    --destructive: 350 70% 65%;
+    --destructive-foreground: 330 100% 98%;
+    --border: 280 30% 20%;
+    --input: 280 25% 15%;
+    --ring: 340 82% 65%;
+    --glass-bg: 280 25% 12% / 0.7;
+    --glass-border: 340 60% 60% / 0.2;
+    --chart-1: 340 82% 65%;
+    --chart-2: 320 60% 55%;
+    --chart-3: 280 50% 60%;
+    --chart-4: 350 100% 75%;
+    --chart-5: 300 70% 65%;
   }
 }
 
@@ -87,5 +115,99 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
+}
+
+@layer utilities {
+  /* Glassmorphism utilities */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+  
+  .glass-strong {
+    background: hsl(var(--card));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+  
+  /* Gradient text utility */
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.1);
+  }
+  
+  .glow-primary-strong {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.5), 0 0 60px hsl(var(--primary) / 0.2);
+  }
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.5);
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.7);
+}
+
+/* Monaco Editor custom styling */
+.monaco-editor-container {
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Sakura petal animation */
+@keyframes sakura-fall {
+  0% {
+    transform: translateY(-10vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(var(--drift)) rotate(var(--rotation));
+    opacity: 0;
+  }
+}
+
+.sakura-petal {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background: hsl(var(--primary) / 0.6);
+  border-radius: 50% 0 50% 0;
+  animation: sakura-fall linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  filter: blur(0.5px);
 }

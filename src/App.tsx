@@ -1,21 +1,19 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import IntersectObserver from '@/components/common/IntersectObserver';
-
+import { Toaster } from '@/components/ui/toaster';
 import routes from './routes';
 
-// import { AuthProvider } from '@/contexts/AuthContext';
-// import { RouteGuard } from '@/components/common/RouteGuard';
-import { Toaster } from '@/components/ui/toaster';
-
 const App: React.FC = () => {
+  // Force dark mode for Busya
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
   return (
     <Router>
-      {/*<AuthProvider>*/}
-      {/*<RouteGuard>*/}
       <IntersectObserver />
       <div className="flex flex-col min-h-screen">
-        {/*<Header />*/}
         <main className="flex-grow">
           <Routes>
           {routes.map((route, index) => (
@@ -30,8 +28,6 @@ const App: React.FC = () => {
         </main>
       </div>
       <Toaster />
-      {/*</RouteGuard>*/}
-      {/*</AuthProvider>*/}
     </Router>
   );
 };

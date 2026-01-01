@@ -66,11 +66,8 @@ export default function LivePreview({
     if (!iframeRef.current) return;
 
     const iframe = iframeRef.current;
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
     
-    if (!doc) return;
-
-    // Create the complete HTML document
+    // Use a safer approach with srcdoc to avoid cross-origin issues
     const fullHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -192,10 +189,8 @@ export default function LivePreview({
 </body>
 </html>`;
 
-    // Write to iframe
-    doc.open();
-    doc.write(fullHTML);
-    doc.close();
+    // Update srcdoc attribute to trigger re-render
+    iframe.srcdoc = fullHTML;
   }, [html, css, javascript, executionKey]); // Only re-execute when executionKey changes
 
   return (

@@ -1,14 +1,16 @@
-import { Code2, Download, Maximize2, Minimize2, Play } from 'lucide-react';
+import { Code2, Download, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import ConsolePanel, { type ConsoleMessage } from '@/components/ConsolePanel';
 import CustomDialog, { type DialogData } from '@/components/CustomDialog';
 import EditorTabs from '@/components/EditorTabs';
 import LivePreview from '@/components/LivePreview';
+import MobileRecommendation from '@/components/MobileRecommendation';
 import ResizeHandle from '@/components/ResizeHandle';
 import SakuraBackground from '@/components/SakuraBackground';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const STORAGE_KEY = 'busya-code-editor';
 const PANEL_SIZE_KEY = 'busya-panel-size';
@@ -99,6 +101,9 @@ console.log('Welcome to Busya Code Editor! 🌸');`
 };
 
 export default function EditorPage() {
+  // Check if mobile device
+  const isMobile = useIsMobile();
+
   // Draft state - code being edited (not executed)
   const [code, setCode] = useState<EditorState>(defaultCode);
   
@@ -110,13 +115,17 @@ export default function EditorPage() {
   
   // Panel sizing state
   const [editorWidth, setEditorWidth] = useState(DEFAULT_EDITOR_WIDTH);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'html' | 'css' | 'javascript'>('html');
   const [consoleMessages, setConsoleMessages] = useState<ConsoleMessage[]>([]);
   const [currentDialog, setCurrentDialog] = useState<DialogData | null>(null);
   const [dialogResolver, setDialogResolver] = useState<((value: string | boolean | null) => void) | null>(null);
   const { toast } = useToast();
+
+  // If mobile, show recommendation screen instead
+  if (isMobile) {
+    return <MobileRecommendation />;
+  }
 
   // Load code from localStorage on mount
   useEffect(() => {
@@ -173,10 +182,6 @@ export default function EditorPage() {
       
       return constrainedWidth;
     });
-  };
-
-  const toggleFullscreen = () => {
-    setIsFullscreen(prev => !prev);
   };
 
   const handleRun = () => {
@@ -338,140 +343,79 @@ export default function EditorPage() {
 
         {/* Editor Layout */}
         <main className="flex-1 container mx-auto px-2 xl:px-4 py-3 xl:py-6">
-          {isFullscreen ? (
-            /* Fullscreen Preview Mode */
-            <div className="h-[calc(100vh-100px)] xl:h-[calc(100vh-140px)] flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">Live Preview</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleFullscreen}
-                  className="glass border-border/50"
-                >
-                  <Minimize2 className="w-4 h-4 mr-2" />
-                  Exit Fullscreen
-                </Button>
-              </div>
-              <div className="flex-1 flex flex-col gap-3">
-                <div className="flex-1">
-                  <LivePreview
-                    html={runtimeCode.html}
-                    css={runtimeCode.css}
-                    javascript={runtimeCode.javascript}
-                    onConsoleMessage={handleConsoleMessage}
-                    onDialogRequest={handleDialogRequest}
-                    executionKey={executionKey}
-                  />
-                </div>
-                <div className="h-64">
-                  <ConsolePanel 
-                    messages={consoleMessages}
-                    onClear={handleClearConsole}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Normal Split Layout */
-            <div className="flex flex-col xl:flex-row gap-3 xl:gap-0 h-[calc(100vh-100px)] xl:h-[calc(100vh-140px)]">
-              {/* Left Side - Tabbed Code Editor */}
-              <div 
-                className="flex flex-col h-full min-h-0"
-                style={{ 
-                  width: window.innerWidth >= 1280 ? `${editorWidth}%` : '100%' 
-                }}
-              >
-                <div className="glass-strong rounded-2xl overflow-hidden h-full flex flex-col">
-                  {/* Tabs */}
-                  <EditorTabs activeTab={activeTab} onTabChange={setActiveTab} />
-                  
-                  {/* Single Editor Container */}
-                  <div className="flex-1 monaco-editor-container">
-                    {activeTab === 'html' && (
-                      <CodeEditor
-                        language="html"
-                        value={code.html}
-                        onChange={handleCodeChange('html')}
-                        label="HTML"
-                      />
-                    )}
-                    {activeTab === 'css' && (
-                      <CodeEditor
-                        language="css"
-                        value={code.css}
-                        onChange={handleCodeChange('css')}
-                        label="CSS"
-                      />
-                    )}
-                    {activeTab === 'javascript' && (
-                      <CodeEditor
-                        language="javascript"
-                        value={code.javascript}
-                        onChange={handleCodeChange('javascript')}
-                        label="JavaScript"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Resize Handle - Desktop Only */}
-              <ResizeHandle onResize={handleResize} />
-
-              {/* Right Side - Live Preview and Console */}
-              <div 
-                className="flex flex-col h-full gap-3 xl:gap-4 min-h-[400px] xl:min-h-0"
-                style={{ 
-                  width: window.innerWidth >= 1280 ? `${100 - editorWidth}%` : '100%' 
-                }}
-              >
-                {/* Preview Header with Fullscreen Button */}
-                <div className="flex items-center justify-end xl:hidden mb-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleFullscreen}
-                    className="glass border-border/50"
-                  >
-                    <Maximize2 className="w-4 h-4 mr-2" />
-                    Fullscreen Preview
-                  </Button>
-                </div>
-
-                {/* Live Preview */}
-                <div className="flex-1 min-h-0 relative">
-                  <LivePreview
-                    html={runtimeCode.html}
-                    css={runtimeCode.css}
-                    javascript={runtimeCode.javascript}
-                    onConsoleMessage={handleConsoleMessage}
-                    onDialogRequest={handleDialogRequest}
-                    executionKey={executionKey}
-                  />
-                  {/* Fullscreen button for desktop */}
-                  <div className="hidden xl:block absolute top-4 right-4 z-10">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={toggleFullscreen}
-                      className="glass border-border/50"
-                    >
-                      <Maximize2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+          <div className="flex flex-col xl:flex-row gap-3 xl:gap-0 h-[calc(100vh-100px)] xl:h-[calc(100vh-140px)]">
+            {/* Left Side - Tabbed Code Editor */}
+            <div 
+              className="flex flex-col h-full min-h-0"
+              style={{ 
+                width: `${editorWidth}%`
+              }}
+            >
+              <div className="glass-strong rounded-2xl overflow-hidden h-full flex flex-col">
+                {/* Tabs */}
+                <EditorTabs activeTab={activeTab} onTabChange={setActiveTab} />
                 
-                {/* Console Panel */}
-                <div className="h-48 xl:h-64">
-                  <ConsolePanel 
-                    messages={consoleMessages}
-                    onClear={handleClearConsole}
-                  />
+                {/* Single Editor Container */}
+                <div className="flex-1 monaco-editor-container">
+                  {activeTab === 'html' && (
+                    <CodeEditor
+                      language="html"
+                      value={code.html}
+                      onChange={handleCodeChange('html')}
+                      label="HTML"
+                    />
+                  )}
+                  {activeTab === 'css' && (
+                    <CodeEditor
+                      language="css"
+                      value={code.css}
+                      onChange={handleCodeChange('css')}
+                      label="CSS"
+                    />
+                  )}
+                  {activeTab === 'javascript' && (
+                    <CodeEditor
+                      language="javascript"
+                      value={code.javascript}
+                      onChange={handleCodeChange('javascript')}
+                      label="JavaScript"
+                    />
+                  )}
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Resize Handle - Desktop Only */}
+            <ResizeHandle onResize={handleResize} />
+
+            {/* Right Side - Live Preview and Console */}
+            <div 
+              className="flex flex-col h-full gap-3 xl:gap-4 min-h-[400px] xl:min-h-0"
+              style={{ 
+                width: `${100 - editorWidth}%`
+              }}
+            >
+              {/* Live Preview */}
+              <div className="flex-1 min-h-0">
+                <LivePreview
+                  html={runtimeCode.html}
+                  css={runtimeCode.css}
+                  javascript={runtimeCode.javascript}
+                  onConsoleMessage={handleConsoleMessage}
+                  onDialogRequest={handleDialogRequest}
+                  executionKey={executionKey}
+                />
+              </div>
+              
+              {/* Console Panel */}
+              <div className="h-48 xl:h-64">
+                <ConsolePanel 
+                  messages={consoleMessages}
+                  onClear={handleClearConsole}
+                />
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     </div>

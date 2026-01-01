@@ -1,15 +1,65 @@
 import { AlertCircle } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import type { ConsoleMessage } from './ConsolePanel';
+import type { DialogData } from './CustomDialog';
 
 interface LivePreviewProps {
   html: string;
   css: string;
   javascript: string;
+  onConsoleMessage?: (message: ConsoleMessage) => void;
+  onDialogRequest?: (dialog: DialogData) => Promise<string | boolean | null>;
 }
 
-export default function LivePreview({ html, css, javascript }: LivePreviewProps) {
+export default function LivePreview({ 
+  html, 
+  css, 
+  javascript, 
+  onConsoleMessage,
+  onDialogRequest 
+}: LivePreviewProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const dialogResolversRef = useRef<Map<string, (value: string | boolean | null) => void>>(new Map());
+
+  // Handle messages from iframe
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.source !== 'busya-preview') return;
+
+      const { type, data } = event.data;
+
+      if (type === 'console' && onConsoleMessage) {
+        onConsoleMessage({
+          id: `${Date.now()}-${Math.random()}`,
+          type: data.level,
+          message: data.message,
+          timestamp: Date.now()
+        });
+      } else if (type === 'dialog' && onDialogRequest) {
+        const dialogId = data.id;
+        const result = await onDialogRequest({
+          type: data.dialogType,
+          message: data.message,
+          defaultValue: data.defaultValue,
+          id: dialogId
+        });
+
+        // Send result back to iframe
+        iframeRef.current?.contentWindow?.postMessage({
+          source: 'busya-parent',
+          type: 'dialog-response',
+          id: dialogId,
+          result
+        }, '*');
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onConsoleMessage, onDialogRequest]);
+
   // Create the complete HTML document using srcdoc to avoid cross-origin issues
   const srcDoc = useMemo(() => {
     return `<!DOCTYPE html>
@@ -33,13 +83,97 @@ export default function LivePreview({ html, css, javascript }: LivePreviewProps)
 <body>
   ${html}
   <script>
-    // Wrap user code in try-catch for friendly error handling
-    try {
-      ${javascript}
-    } catch (error) {
-      console.error('✨ Oops! There seems to be a small issue:', error.message);
-      document.body.innerHTML += '<div style="background: rgba(255, 182, 193, 0.1); border: 1px solid rgba(255, 182, 193, 0.3); border-radius: 8px; padding: 16px; margin: 16px 0; color: #ffb6c1; font-family: monospace;"><strong>✨ Gentle Hint:</strong> ' + error.message + '</div>';
-    }
+    (function() {
+      // Console capture
+      const originalConsole = {
+        log: console.log,
+        warn: console.warn,
+        error: console.error
+      };
+
+      function sendConsoleMessage(level, args) {
+        const message = args.map(arg => {
+          if (typeof arg === 'object') {
+            try {
+              return JSON.stringify(arg, null, 2);
+            } catch (e) {
+              return String(arg);
+            }
+          }
+          return String(arg);
+        }).join(' ');
+
+        window.parent.postMessage({
+          source: 'busya-preview',
+          type: 'console',
+          data: { level, message }
+        }, '*');
+      }
+
+      console.log = function(...args) {
+        originalConsole.log.apply(console, args);
+        sendConsoleMessage('log', args);
+      };
+
+      console.warn = function(...args) {
+        originalConsole.warn.apply(console, args);
+        sendConsoleMessage('warn', args);
+      };
+
+      console.error = function(...args) {
+        originalConsole.error.apply(console, args);
+        sendConsoleMessage('error', args);
+      };
+
+      // Dialog support
+      const dialogResolvers = new Map();
+      let dialogCounter = 0;
+
+      function createDialog(dialogType, message, defaultValue) {
+        return new Promise((resolve) => {
+          const dialogId = 'dialog-' + (dialogCounter++);
+          dialogResolvers.set(dialogId, resolve);
+
+          window.parent.postMessage({
+            source: 'busya-preview',
+            type: 'dialog',
+            data: { dialogType, message, defaultValue, id: dialogId }
+          }, '*');
+        });
+      }
+
+      // Listen for dialog responses
+      window.addEventListener('message', (event) => {
+        if (event.data?.source === 'busya-parent' && event.data?.type === 'dialog-response') {
+          const resolver = dialogResolvers.get(event.data.id);
+          if (resolver) {
+            resolver(event.data.result);
+            dialogResolvers.delete(event.data.id);
+          }
+        }
+      });
+
+      // Override dialog functions
+      window.alert = function(message) {
+        createDialog('alert', String(message || ''));
+      };
+
+      window.confirm = function(message) {
+        return createDialog('confirm', String(message || ''));
+      };
+
+      window.prompt = function(message, defaultValue) {
+        return createDialog('prompt', String(message || ''), defaultValue || '');
+      };
+
+      // Wrap user code in try-catch for friendly error handling
+      try {
+        ${javascript}
+      } catch (error) {
+        console.error('✨ Oops! There seems to be a small issue:', error.message);
+        document.body.innerHTML += '<div style="background: rgba(255, 182, 193, 0.1); border: 1px solid rgba(255, 182, 193, 0.3); border-radius: 8px; padding: 16px; margin: 16px 0; color: #ffb6c1; font-family: monospace;"><strong>✨ Gentle Hint:</strong> ' + error.message + '</div>';
+      }
+    })();
   </script>
 </body>
 </html>`;
@@ -61,8 +195,9 @@ export default function LivePreview({ html, css, javascript }: LivePreviewProps)
       </div>
       <div className="flex-1 bg-white">
         <iframe
+          ref={iframeRef}
           title="Live Preview"
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-modals"
           srcDoc={srcDoc}
           className="w-full h-full border-0"
         />

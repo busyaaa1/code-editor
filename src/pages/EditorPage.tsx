@@ -1,10 +1,13 @@
-import { Code2 } from 'lucide-react';
+import { Code2, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CodeEditor from '@/components/CodeEditor';
+import ConsolePanel, { type ConsoleMessage } from '@/components/ConsolePanel';
+import CustomDialog, { type DialogData } from '@/components/CustomDialog';
 import EditorTabs from '@/components/EditorTabs';
 import LivePreview from '@/components/LivePreview';
 import SakuraBackground from '@/components/SakuraBackground';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'busya-code-editor';
 
@@ -18,7 +21,12 @@ const defaultCode: EditorState = {
   html: `<div class="container">
   <h1>Welcome to Busya! ✨</h1>
   <p>Start coding and see your changes live!</p>
-  <button id="myButton">Click me!</button>
+  <div class="button-group">
+    <button id="alertBtn">Alert</button>
+    <button id="confirmBtn">Confirm</button>
+    <button id="promptBtn">Prompt</button>
+    <button id="consoleBtn">Console</button>
+  </div>
 </div>`,
   css: `.container {
   max-width: 600px;
@@ -39,6 +47,13 @@ p {
   margin-bottom: 2rem;
 }
 
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 button {
   background: linear-gradient(135deg, #ff69b4, #ff1493);
   color: white;
@@ -53,14 +68,40 @@ button {
 button:hover {
   transform: scale(1.05);
 }`,
-  javascript: `document.getElementById('myButton').addEventListener('click', () => {
+  javascript: `// Alert demo
+document.getElementById('alertBtn').addEventListener('click', () => {
   alert('Hello from Busya! 🌸');
-});`
+});
+
+// Confirm demo
+document.getElementById('confirmBtn').addEventListener('click', () => {
+  const result = confirm('Do you like Busya?');
+  console.log('Confirm result:', result);
+});
+
+// Prompt demo
+document.getElementById('promptBtn').addEventListener('click', () => {
+  const name = prompt('What is your name?', 'Guest');
+  console.log('Your name is:', name);
+});
+
+// Console demo
+document.getElementById('consoleBtn').addEventListener('click', () => {
+  console.log('This is a log message');
+  console.warn('This is a warning message');
+  console.error('This is an error message');
+});
+
+console.log('Welcome to Busya Code Editor! 🌸');`
 };
 
 export default function EditorPage() {
   const [code, setCode] = useState<EditorState>(defaultCode);
   const [activeTab, setActiveTab] = useState<'html' | 'css' | 'javascript'>('html');
+  const [consoleMessages, setConsoleMessages] = useState<ConsoleMessage[]>([]);
+  const [currentDialog, setCurrentDialog] = useState<DialogData | null>(null);
+  const [dialogResolver, setDialogResolver] = useState<((value: string | boolean | null) => void) | null>(null);
+  const { toast } = useToast();
 
   // Load code from localStorage on mount
   useEffect(() => {
@@ -75,7 +116,7 @@ export default function EditorPage() {
     }
   }, []);
 
-  // Save code to localStorage whenever it changes
+  // Save code to localStorage whenever it changes (autosave with debounce)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(code));
@@ -92,13 +133,98 @@ export default function EditorPage() {
     if (confirm('Are you sure you want to reset to the default code? This cannot be undone.')) {
       setCode(defaultCode);
       localStorage.removeItem(STORAGE_KEY);
+      setConsoleMessages([]);
     }
+  };
+
+  const handleConsoleMessage = (message: ConsoleMessage) => {
+    setConsoleMessages(prev => [...prev, message]);
+  };
+
+  const handleClearConsole = () => {
+    setConsoleMessages([]);
+  };
+
+  const handleDialogRequest = (dialog: DialogData): Promise<string | boolean | null> => {
+    return new Promise((resolve) => {
+      setCurrentDialog(dialog);
+      setDialogResolver(() => resolve);
+    });
+  };
+
+  const handleDialogClose = (result: string | boolean | null) => {
+    if (dialogResolver) {
+      dialogResolver(result);
+      setDialogResolver(null);
+    }
+    setCurrentDialog(null);
+  };
+
+  const isCodeEmpty = (code: string): boolean => {
+    // Remove whitespace and comments
+    const cleaned = code
+      .replace(/<!--[\s\S]*?-->/g, '') // HTML comments
+      .replace(/\/\*[\s\S]*?\*\//g, '') // CSS/JS block comments
+      .replace(/\/\/.*/g, '') // JS line comments
+      .trim();
+    return cleaned.length === 0;
+  };
+
+  const handleDownload = () => {
+    // Validate HTML is not empty
+    if (isCodeEmpty(code.html)) {
+      toast({
+        title: "HTML Required",
+        description: "Please add some HTML code before downloading. The HTML file is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Download HTML (always)
+    const htmlBlob = new Blob([code.html], { type: 'text/html' });
+    const htmlUrl = URL.createObjectURL(htmlBlob);
+    const htmlLink = document.createElement('a');
+    htmlLink.href = htmlUrl;
+    htmlLink.download = 'index.html';
+    htmlLink.click();
+    URL.revokeObjectURL(htmlUrl);
+
+    // Download CSS (only if not empty)
+    if (!isCodeEmpty(code.css)) {
+      const cssBlob = new Blob([code.css], { type: 'text/css' });
+      const cssUrl = URL.createObjectURL(cssBlob);
+      const cssLink = document.createElement('a');
+      cssLink.href = cssUrl;
+      cssLink.download = 'style.css';
+      cssLink.click();
+      URL.revokeObjectURL(cssUrl);
+    }
+
+    // Download JS (only if not empty)
+    if (!isCodeEmpty(code.javascript)) {
+      const jsBlob = new Blob([code.javascript], { type: 'text/javascript' });
+      const jsUrl = URL.createObjectURL(jsBlob);
+      const jsLink = document.createElement('a');
+      jsLink.href = jsUrl;
+      jsLink.download = 'script.js';
+      jsLink.click();
+      URL.revokeObjectURL(jsUrl);
+    }
+
+    toast({
+      title: "Files Downloaded",
+      description: "Your code files have been downloaded successfully!",
+    });
   };
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Sakura Background - Always enabled */}
       <SakuraBackground enabled={true} petalCount={30} />
+
+      {/* Custom Dialog */}
+      <CustomDialog dialog={currentDialog} onClose={handleDialogClose} />
 
       {/* Main Content */}
       <div className="relative z-10 min-h-screen flex flex-col">
@@ -120,10 +246,19 @@ export default function EditorPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={handleDownload}
+                  className="glass border-border/50 text-xs xl:text-sm"
+                >
+                  <Download className="w-3 h-3 xl:w-4 xl:h-4 mr-1 xl:mr-2" />
+                  <span className="hidden sm:inline">Download</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleReset}
                   className="glass border-border/50 text-xs xl:text-sm"
                 >
-                  Reset Code
+                  Reset
                 </Button>
               </div>
             </div>
@@ -169,13 +304,26 @@ export default function EditorPage() {
               </div>
             </div>
 
-            {/* Right Side - Live Preview */}
-            <div className="h-full min-h-[400px] xl:min-h-0">
-              <LivePreview
-                html={code.html}
-                css={code.css}
-                javascript={code.javascript}
-              />
+            {/* Right Side - Live Preview and Console */}
+            <div className="flex flex-col h-full gap-3 xl:gap-4 min-h-[400px] xl:min-h-0">
+              {/* Live Preview */}
+              <div className="flex-1 min-h-0">
+                <LivePreview
+                  html={code.html}
+                  css={code.css}
+                  javascript={code.javascript}
+                  onConsoleMessage={handleConsoleMessage}
+                  onDialogRequest={handleDialogRequest}
+                />
+              </div>
+              
+              {/* Console Panel */}
+              <div className="h-48 xl:h-64">
+                <ConsolePanel 
+                  messages={consoleMessages}
+                  onClear={handleClearConsole}
+                />
+              </div>
             </div>
           </div>
         </main>

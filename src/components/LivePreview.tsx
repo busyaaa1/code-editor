@@ -1,5 +1,5 @@
 import { AlertCircle } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import type { ConsoleMessage } from './ConsolePanel';
@@ -11,6 +11,7 @@ interface LivePreviewProps {
   javascript: string;
   onConsoleMessage?: (message: ConsoleMessage) => void;
   onDialogRequest?: (dialog: DialogData) => Promise<string | boolean | null>;
+  executionKey?: number; // Used to trigger re-execution
 }
 
 export default function LivePreview({ 
@@ -18,10 +19,10 @@ export default function LivePreview({
   css, 
   javascript, 
   onConsoleMessage,
-  onDialogRequest 
+  onDialogRequest,
+  executionKey = 0
 }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const dialogResolversRef = useRef<Map<string, (value: string | boolean | null) => void>>(new Map());
 
   // Handle messages from iframe
   useEffect(() => {
@@ -60,9 +61,17 @@ export default function LivePreview({
     return () => window.removeEventListener('message', handleMessage);
   }, [onConsoleMessage, onDialogRequest]);
 
-  // Create the complete HTML document using srcdoc to avoid cross-origin issues
-  const srcDoc = useMemo(() => {
-    return `<!DOCTYPE html>
+  // Update iframe content only when executionKey changes (manual execution)
+  useEffect(() => {
+    if (!iframeRef.current) return;
+
+    const iframe = iframeRef.current;
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    
+    if (!doc) return;
+
+    // Create the complete HTML document
+    const fullHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -166,18 +175,28 @@ export default function LivePreview({
         return createDialog('prompt', String(message || ''), defaultValue || '');
       };
 
-      // Wrap user code in try-catch for friendly error handling
+      // Wrap user code in try-catch for error handling
+      // This ensures HTML/CSS still render even if JS fails
       try {
         ${javascript}
       } catch (error) {
-        console.error('✨ Oops! There seems to be a small issue:', error.message);
-        document.body.innerHTML += '<div style="background: rgba(255, 182, 193, 0.1); border: 1px solid rgba(255, 182, 193, 0.3); border-radius: 8px; padding: 16px; margin: 16px 0; color: #ffb6c1; font-family: monospace;"><strong>✨ Gentle Hint:</strong> ' + error.message + '</div>';
+        console.error('Runtime Error: ' + error.message);
+        // Display friendly error message in preview
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'background: rgba(255, 182, 193, 0.1); border: 1px solid rgba(255, 182, 193, 0.3); border-radius: 8px; padding: 16px; margin: 16px 0; color: #ffb6c1; font-family: monospace;';
+        errorDiv.innerHTML = '<strong>✨ Gentle Hint:</strong> ' + error.message;
+        document.body.appendChild(errorDiv);
       }
     })();
   </script>
 </body>
 </html>`;
-  }, [html, css, javascript]);
+
+    // Write to iframe
+    doc.open();
+    doc.write(fullHTML);
+    doc.close();
+  }, [html, css, javascript, executionKey]); // Only re-execute when executionKey changes
 
   return (
     <Card className="glass-strong rounded-2xl overflow-hidden h-full flex flex-col">
@@ -190,7 +209,7 @@ export default function LivePreview({
         </Badge>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <AlertCircle className="w-3 h-3" />
-          <span>Updates automatically</span>
+          <span>Click Run to execute</span>
         </div>
       </div>
       <div className="flex-1 bg-white">
@@ -198,7 +217,6 @@ export default function LivePreview({
           ref={iframeRef}
           title="Live Preview"
           sandbox="allow-scripts allow-modals"
-          srcDoc={srcDoc}
           className="w-full h-full border-0"
         />
       </div>

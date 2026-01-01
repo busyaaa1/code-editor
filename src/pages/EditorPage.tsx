@@ -1,4 +1,4 @@
-import { Code2, Download } from 'lucide-react';
+import { Code2, Download, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import ConsolePanel, { type ConsoleMessage } from '@/components/ConsolePanel';
@@ -96,7 +96,15 @@ console.log('Welcome to Busya Code Editor! 🌸');`
 };
 
 export default function EditorPage() {
+  // Draft state - code being edited (not executed)
   const [code, setCode] = useState<EditorState>(defaultCode);
+  
+  // Runtime state - code that is actually executed in the iframe
+  const [runtimeCode, setRuntimeCode] = useState<EditorState>(defaultCode);
+  
+  // Execution key - increments on each Run to trigger re-execution
+  const [executionKey, setExecutionKey] = useState(0);
+  
   const [activeTab, setActiveTab] = useState<'html' | 'css' | 'javascript'>('html');
   const [consoleMessages, setConsoleMessages] = useState<ConsoleMessage[]>([]);
   const [currentDialog, setCurrentDialog] = useState<DialogData | null>(null);
@@ -110,13 +118,15 @@ export default function EditorPage() {
       try {
         const parsed = JSON.parse(saved);
         setCode(parsed);
+        // Also set as runtime code on initial load
+        setRuntimeCode(parsed);
       } catch (error) {
         console.error('Failed to load saved code:', error);
       }
     }
   }, []);
 
-  // Save code to localStorage whenever it changes (autosave with debounce)
+  // Save draft code to localStorage whenever it changes (autosave with debounce)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(code));
@@ -126,14 +136,28 @@ export default function EditorPage() {
   }, [code]);
 
   const handleCodeChange = (language: keyof EditorState) => (value: string) => {
+    // Update draft state only - does not trigger execution
     setCode(prev => ({ ...prev, [language]: value }));
+  };
+
+  const handleRun = () => {
+    // Clear console before each run
+    setConsoleMessages([]);
+    
+    // Update runtime state with current draft code
+    setRuntimeCode(code);
+    
+    // Increment execution key to trigger re-execution
+    setExecutionKey(prev => prev + 1);
   };
 
   const handleReset = () => {
     if (confirm('Are you sure you want to reset to the default code? This cannot be undone.')) {
       setCode(defaultCode);
+      setRuntimeCode(defaultCode);
       localStorage.removeItem(STORAGE_KEY);
       setConsoleMessages([]);
+      setExecutionKey(prev => prev + 1);
     }
   };
 
@@ -244,6 +268,14 @@ export default function EditorPage() {
 
               <div className="flex items-center gap-2">
                 <Button
+                  onClick={handleRun}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs xl:text-sm"
+                  size="sm"
+                >
+                  <Play className="w-3 h-3 xl:w-4 xl:h-4 mr-1 xl:mr-2" />
+                  Run
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={handleDownload}
@@ -309,11 +341,12 @@ export default function EditorPage() {
               {/* Live Preview */}
               <div className="flex-1 min-h-0">
                 <LivePreview
-                  html={code.html}
-                  css={code.css}
-                  javascript={code.javascript}
+                  html={runtimeCode.html}
+                  css={runtimeCode.css}
+                  javascript={runtimeCode.javascript}
                   onConsoleMessage={handleConsoleMessage}
                   onDialogRequest={handleDialogRequest}
+                  executionKey={executionKey}
                 />
               </div>
               

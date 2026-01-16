@@ -11,6 +11,7 @@ import SakuraBackground from '@/components/SakuraBackground';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { downloadAsZip } from '@/utils/zipExport';
 
 const STORAGE_KEY = 'busya-code-editor';
 const PANEL_SIZE_KEY = 'busya-panel-size';
@@ -228,62 +229,28 @@ export default function EditorPage() {
     setCurrentDialog(null);
   };
 
-  const isCodeEmpty = (code: string): boolean => {
-    // Remove whitespace and comments
-    const cleaned = code
-      .replace(/<!--[\s\S]*?-->/g, '') // HTML comments
-      .replace(/\/\*[\s\S]*?\*\//g, '') // CSS/JS block comments
-      .replace(/\/\/.*/g, '') // JS line comments
-      .trim();
-    return cleaned.length === 0;
-  };
+  const handleDownload = async () => {
+    try {
+      // Use the ZIP export utility
+      await downloadAsZip({
+        html: code.html,
+        css: code.css,
+        javascript: code.javascript
+      });
 
-  const handleDownload = () => {
-    // Validate HTML is not empty
-    if (isCodeEmpty(code.html)) {
+      // Show success toast
       toast({
-        title: "HTML Required",
-        description: "Please add some HTML code before downloading. The HTML file is required.",
+        title: "Project Downloaded",
+        description: "Your Busya project has been downloaded as a ZIP file!",
+      });
+    } catch (error) {
+      // Show friendly error toast
+      toast({
+        title: "Download Failed",
+        description: error instanceof Error ? error.message : "Unable to download project. Please try again.",
         variant: "destructive"
       });
-      return;
     }
-
-    // Download HTML (always)
-    const htmlBlob = new Blob([code.html], { type: 'text/html' });
-    const htmlUrl = URL.createObjectURL(htmlBlob);
-    const htmlLink = document.createElement('a');
-    htmlLink.href = htmlUrl;
-    htmlLink.download = 'index.html';
-    htmlLink.click();
-    URL.revokeObjectURL(htmlUrl);
-
-    // Download CSS (only if not empty)
-    if (!isCodeEmpty(code.css)) {
-      const cssBlob = new Blob([code.css], { type: 'text/css' });
-      const cssUrl = URL.createObjectURL(cssBlob);
-      const cssLink = document.createElement('a');
-      cssLink.href = cssUrl;
-      cssLink.download = 'style.css';
-      cssLink.click();
-      URL.revokeObjectURL(cssUrl);
-    }
-
-    // Download JS (only if not empty)
-    if (!isCodeEmpty(code.javascript)) {
-      const jsBlob = new Blob([code.javascript], { type: 'text/javascript' });
-      const jsUrl = URL.createObjectURL(jsBlob);
-      const jsLink = document.createElement('a');
-      jsLink.href = jsUrl;
-      jsLink.download = 'script.js';
-      jsLink.click();
-      URL.revokeObjectURL(jsUrl);
-    }
-
-    toast({
-      title: "Files Downloaded",
-      description: "Your code files have been downloaded successfully!",
-    });
   };
 
   return (
